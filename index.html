@@ -19,12 +19,15 @@ const ctx = canvas.getContext('2d');
 
 // 1. STORE COORDINATES AS RELATIVE RATIOS (0.0 to 1.0)
 const relativeNodes = [
-    { id: 0, rx: 0.15, ry: 0.50, label: "C1" },
-    { id: 1, rx: 0.40, ry: 0.35, label: "C2" }, // Central Branch Point
-    { id: 2, rx: 0.65, ry: 0.50, label: "C3" },
-    { id: 3, rx: 0.85, ry: 0.35, label: "C4" },
-    { id: 4, rx: 0.40, ry: 0.70, label: "C5" }  // Methyl tail
+    { id: 0, rx: 0.2, ry: 0.2, label: "C1" },
+    { id: 1, rx: 0.4, ry: 0.5, label: "C2" }, // Central Branch Point
+    { id: 2, rx: 0.6, ry: 0.2, label: "C3" },
+    { id: 3, rx: 0.8, ry: 0.5, label: "C4" },
+    { id: 4, rx: 0.4, ry: 0.8, label: "C5" }  // Methyl tail
 ];
+    const currentBonds = [
+      [0,1],[0,1],[1,4],[1,2],[2,3],[2,3]
+    ];
 
 // 2. THE DYNAMIC AUTO-RESIZE FUNCTION
 function resizeCanvas() {
