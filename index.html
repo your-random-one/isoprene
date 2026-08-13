@@ -1,10 +1,80 @@
 <html>
   <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <title>Isoprene: The Terpene Game</title>
   </head>
   <body class="bg-black text-white min-h-screen items-center flex flex-col">
-    Test!
+    A quick message from Isoprene: Isoprene is in development.
+    <div class="w-[95%] md:max-w-md mx-auto bg-slate-900 p-4 md:p-6 rounded-3xl border border-slate-800 text-center">
+      <!-- Canvas wrapper -->
+      <div class="w-full aspect-square bg-slate-950 rounded-2xl border border-slate-800 p-2 inline-block mb-4">
+        <canvas id="gameCanvas" class="w-full h-full block cursor-pointer"></canvas>
+      </div>
+    </div>
+    <script>
+      const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+// 1. STORE COORDINATES AS RELATIVE RATIOS (0.0 to 1.0)
+const relativeNodes = [
+    { id: 0, rx: 0.15, ry: 0.50, label: "C1" },
+    { id: 1, rx: 0.40, ry: 0.35, label: "C2" }, // Central Branch Point
+    { id: 2, rx: 0.65, ry: 0.50, label: "C3" },
+    { id: 3, rx: 0.85, ry: 0.35, label: "C4" },
+    { id: 4, rx: 0.40, ry: 0.70, label: "C5" }  // Methyl tail
+];
+
+// 2. THE DYNAMIC AUTO-RESIZE FUNCTION
+function resizeCanvas() {
+    // Get the actual width of the canvas container calculated by Tailwind
+    const displayWidth = canvas.clientWidth;
+    
+    // Set the canvas internal drawing pixels to match its display size exactly
+    // This prevents any screen blurriness on high-definition mobile displays
+    canvas.width = displayWidth;
+    canvas.height = displayWidth; // Keeps it a perfect square
+    
+    // Draw the scene immediately after resizing
+    drawScene();
+}
+
+// 3. DRAW SCENE USING CONVERTED PIXEL VALUES
+function drawScene() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Dynamically calculate responsive scale values for lines and circles
+    const nodeRadius = canvas.width * 0.04; // Nodes are always 4% of screen width
+    const lineWidth = canvas.width * 0.012; // Bonds are always 1.2% of screen width
+    const doubleBondOffset = canvas.width * 0.015;
+
+    // Convert relative node positions to actual screen pixel coordinates
+    const scaledNodes = relativeNodes.map(node => ({
+        id: node.id,
+        x: node.rx * canvas.width,
+        y: node.ry * canvas.height,
+        label: node.label
+    }));
+
+    // [Execute your drawing logic loops here using scaledNodes, nodeRadius, and lineWidth]
+    // Example Node Circle Drawing:
+    scaledNodes.forEach(node => {
+        ctx.fillStyle = "#0f172a";
+        ctx.strokeStyle = "#475569";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, nodeRadius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+    });
+}
+
+// 4. BIND TO WINDOW RESIZE EVENTS
+// Automatically recalculates everything if a mobile user switches to landscape mode
+window.addEventListener('resize', resizeCanvas);
+window.addEventListener('DOMContentLoaded', resizeCanvas);
+      
+    </script>
   </body>
 </html>
