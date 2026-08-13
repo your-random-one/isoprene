@@ -42,14 +42,15 @@ function resizeCanvas() {
 
 // 3. DRAW SCENE USING CONVERTED PIXEL VALUES
 function drawScene() {
+    // 1. Clear the canvas frame before every repaint pass
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    // Dynamically calculate responsive scale values for lines and circles
-    const nodeRadius = canvas.width * 0.04; // Nodes are always 4% of screen width
-    const lineWidth = canvas.width * 0.012; // Bonds are always 1.2% of screen width
-    const doubleBondOffset = canvas.width * 0.015;
-
-    // Convert relative node positions to actual screen pixel coordinates
+    // 2. DYNAMICALLY SCALE SIZES BASED ON THE RESPONSIVE CANVAS WIDTH
+    const nodeRadius = canvas.width * 0.045;       // Circles are 4.5% of canvas width
+    const baseLineWidth = canvas.width * 0.012;    // Single lines are 1.2% of canvas width
+    const doubleOffset = canvas.width * 0.016;     // Spacing vector between parallel lines
+    
+    // Convert your relative coordinates (0.0 to 1.0) into exact pixel values for this layout frame
     const scaledNodes = relativeNodes.map(node => ({
         id: node.id,
         x: node.rx * canvas.width,
@@ -57,19 +58,91 @@ function drawScene() {
         label: node.label
     }));
 
-    // [Execute your drawing logic loops here using scaledNodes, nodeRadius, and lineWidth]
-    // Example Node Circle Drawing:
+    // Local tracker dictionary to prevent drawing identical bonds twice
+    let processedPairs = {};
+
+    // 3. STEP A: RENDER THE MOLECULAR TRACKS (BONDS)
+    currentBonds.forEach(bond => {
+        let c1 = Math.min(bond[0], bond[1]);
+        let c2 = Math.max(bond[0], bond[1]);
+        let key = `${c1}_${c2}`;
+
+        // If we already evaluated this bond pair, skip it to optimize performance
+        if (processedPairs[key]) return;
+
+        // Count array occurrences to detect bond types (1 = Single, 2 = Double)
+        let order = currentBonds.filter(b => (b[0]===c1 && b[1]===c2) || (b[0]===c2 && b[1]===c1)).length;
+        let p1 = scaledNodes[c1];
+        let p2 = scaledNodes[c2];
+
+        ctx.lineCap = "round";
+
+        if (order === 1) {
+            // Draw a pristine, clean single bond path
+            ctx.lineWidth = baseLineWidth;
+            ctx.strokeStyle = "#334155"; // Subtle dark slate structural track
+            ctx.beginPath();
+            ctx.moveTo(p1.x, p1.y);
+            ctx.lineTo(p2.x, p2.y);
+            ctx.stroke();
+        } else if (order === 2) {
+            // Draw a high-energy double bond path using parallel offset geometry
+            ctx.lineWidth = baseLineWidth * 0.9; // Make individual tracks slightly thinner
+            ctx.strokeStyle = "#10b981";       // Glowing emerald green for active double bonds
+            
+            // Calculate direction vector components
+            let dx = p2.x - p1.x;
+            let dy = p2.y - p1.y;
+            let len = Math.sqrt(dx * dx + dy * dy);
+            
+            // Generate perpendicular unit offset values
+            let ox = (-dy / len) * doubleOffset;
+            let oy = (dx / len) * doubleOffset;
+
+            // Line track 1
+            ctx.beginPath();
+            ctx.moveTo(p1.x + ox, p1.y + oy);
+            ctx.lineTo(p2.x + ox, p2.y + oy);
+            ctx.stroke();
+            
+            // Line track 2
+            ctx.beginPath();
+            ctx.moveTo(p1.x - ox, p1.y - oy);
+            ctx.lineTo(p2.x - ox, p2.y - oy);
+            ctx.stroke();
+        }
+        
+        processedPairs[key] = true; // Mark pair group as rendered
+    });
+
+    // 4. STEP B: RENDER THE CARBON INTERSECTIONS (NODES)
     scaledNodes.forEach(node => {
-        ctx.fillStyle = "#0f172a";
-        ctx.strokeStyle = "#475569";
-        ctx.lineWidth = 2;
+        ctx.lineWidth = canvas.width * 0.008; // Outline thickness scale
+
+        // Change color state dynamically if player has clicked a node to begin a swing action
+        if (selectedNodeFrom !== null && selectedNodeFrom.id === node.id) {
+            ctx.fillStyle = "#f59e0b";   // Radiant amber fill for the active selection
+            ctx.strokeStyle = "#fbbf24"; // Bright gold border ring
+        } else {
+            ctx.fillStyle = "#0f172a";   // Dark slate background match
+            ctx.strokeStyle = "#475569"; // Cool gray border ring
+        }
+
+        // Draw the main carbon circle
         ctx.beginPath();
         ctx.arc(node.x, node.y, nodeRadius, 0, Math.PI * 2);
         ctx.fill();
         ctx.stroke();
-    });
-}
 
+        // Draw the text string labels perfectly in the center of the node circle
+        ctx.fillStyle = (selectedNodeFrom !== null && selectedNodeFrom.id === node.id) ? "#0f172a" : "#94a3b8";
+        ctx.font = `bold ${canvas.width * 0.03}px monospace`; // Scales font size relative to screen
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(node.label, node.x, node.y);
+    });
+                                }
+      
 // 4. BIND TO WINDOW RESIZE EVENTS
 // Automatically recalculates everything if a mobile user switches to landscape mode
 window.addEventListener('resize', resizeCanvas);
